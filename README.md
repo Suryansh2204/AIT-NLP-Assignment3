@@ -6,11 +6,13 @@ This project is a web application that translates from English to Hindi. The fro
 
 ## 🎥 **App Demo & Screenshots**
 
+![NLP_A3-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/84151986-ba57-45ee-b292-cdc9e3d9df79)
+  
+_Click to watch a demo of the app in action!_
+
 ![image](https://github.com/user-attachments/assets/c5348661-3b3c-4321-8aa0-3282cc9af5c7)
 _Screenshot of the Translation Web App Interface_
 
-[![Watch the App in Action](https://github.com/user-attachments/assets/4e51b703-2362-4b21-a550-8d43e10acb1d)  
-_Click to watch a demo of the app in action!_
 
 <hr>
 
