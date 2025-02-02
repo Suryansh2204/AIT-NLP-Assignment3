@@ -6,10 +6,10 @@ This project is a web application that translates from English to Hindi. The fro
 
 ## 🎥 **App Demo & Screenshots**
 
-![App Screenshot](path/to/your/image.png)  
+![image](https://github.com/user-attachments/assets/c5348661-3b3c-4321-8aa0-3282cc9af5c7)
 _Screenshot of the Translation Web App Interface_
 
-[![Watch the App in Action](path/to/video-thumbnail.png)](link-to-your-video)  
+[![Watch the App in Action](https://github.com/user-attachments/assets/4e51b703-2362-4b21-a550-8d43e10acb1d)  
 _Click to watch a demo of the app in action!_
 
 <hr>
