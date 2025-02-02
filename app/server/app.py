@@ -3,70 +3,69 @@ from flask_cors import CORS
 import pickle
 import torch
 import numpy as np
-from LSTMLanguageModel import LSTMLanguageModel
+from utils import *
 app=Flask(__name__)
 
 # Enable CORS
-CORS(app,resources={r"/predict": {"origins": "http://localhost:3000"}})
+CORS(app,resources={r"/translate": {"origins": "http://localhost:3000"}})
 
-with open('./models/LSTM_model.pkl', 'rb') as model_file:
+with open('./models/model-additive.pkl', 'rb') as model_file:
     model = pickle.load(model_file)
-with open('./models/tokenizer.pkl', 'rb') as model_file:
-    tokenizer = pickle.load(model_file)
-with open('./models/vocab.pkl', 'rb') as model_file:
-    vocab = pickle.load(model_file)
+with open('./models/src_tokenizer.pkl', 'rb') as model_file:
+    src_tokenizer = pickle.load(model_file)
+with open('./models/trg_tokenizer.pkl', 'rb') as model_file:
+    trg_tokenizer = pickle.load(model_file)
 
-def generate(prompt, max_seq_len, temperature, model, tokenizer, vocab, device, seed=None):
-    if seed is not None:
-        torch.manual_seed(seed)
+UNK_IDX = 0
+PAD_IDX = 1
+SOS_IDX = 2
+EOS_IDX = 3
+SPECIAL_TOKENS = ['<unk>', '<pad>', '<sos>', '<eos>']
+
+def translate_sentence(model, sentence, src_tokenizer, trg_tokenizer, device, max_length=128):
     model.eval()
-    tokens = tokenizer(prompt)
-    indices = [vocab[t] for t in tokens]
-    batch_size = 1
-    hidden = model.init_hidden(batch_size, device)
+    
+    # Tokenize and encode the source sentence
+    src_tokens = torch.tensor([src_tokenizer.encode(sentence)]).to(device)
+    
+    # Initialize target sequence with <sos>
+    trg_tokens = torch.tensor([[SOS_IDX]]).to(device)
+    
     with torch.no_grad():
-        for i in range(max_seq_len):
-            src = torch.LongTensor([indices]).to(device)
-            prediction, hidden = model(src, hidden)
+        for _ in range(max_length):
+            # Get model prediction
+            output, _ = model(src_tokens, trg_tokens)
             
-            #prediction: [batch size, seq len, vocab size]
-            #prediction[:, -1]: [batch size, vocab size] #probability of last vocab
+            # Get the next token prediction
+            pred_token = output.argmax(2)[:, -1].item()
             
-            probs = torch.softmax(prediction[:, -1] / temperature, dim=-1)  
-            prediction = torch.multinomial(probs, num_samples=1).item()    
+            # Add predicted token to target sequence
+            trg_tokens = torch.cat([trg_tokens, torch.tensor([[pred_token]]).to(device)], dim=1)
             
-            while prediction == vocab['<unk>']: #if it is unk, we sample again
-                prediction = torch.multinomial(probs, num_samples=1).item()
-
-            if prediction == vocab['<eos>']:    #if it is eos, we stop
+            # Stop if <eos> is predicted
+            if pred_token == EOS_IDX:
                 break
-
-            indices.append(prediction) #autoregressive, thus output becomes input
-
-    itos = vocab.get_itos()
-    tokens = [itos[i] for i in indices]
-    return tokens
+    
+    # Convert tokens back to text
+    translated_text = trg_tokenizer.decode(trg_tokens.squeeze().cpu().numpy())
+    return translated_text
     
 def get_device():
     return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-@app.route('/predict', methods=['GET'])
-def predict():
+@app.route('/translate', methods=['GET'])
+def translate():
     try:
         prompt =  request.args.get('prompt') 
-        max_seq_len =  int(request.args.get('seqlen')) 
-        
+        translation = translate_sentence(model, prompt, src_tokenizer, trg_tokenizer, get_device())
         # Perform the prediction using the loaded model
-        seed = 0
-        temperature = 0.6
-        device=get_device()
-        generation = generate(prompt, max_seq_len, temperature, model, tokenizer, vocab, device, seed)
-        return jsonify({'genText': generation})
+        
+        return jsonify({'translation': translation})
     except Exception as e:
         return jsonify({'error': str(e)})
 
 @app.route('/', methods=['GET'])
 def call():
-    return jsonify({'Name':"Suryansh Srivastava", 'ID':124997,'proglib':'NLP Assignment 2'})
+    return jsonify({'Name':"Suryansh Srivastava", 'ID':124997,'proglib':'NLP Assignment 3'})
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0', port=5000)
