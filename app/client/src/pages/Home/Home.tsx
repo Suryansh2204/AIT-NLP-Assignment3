@@ -1,4 +1,3 @@
-import React, { useEffect } from "react";
 import { useState } from "react";
 import "./Home.css";
 import Loader from "../../components/Loader/Loader";
@@ -6,8 +5,6 @@ import Loader from "../../components/Loader/Loader";
 const Home = () => {
   // state to store the user input for the prompt
   const [prompt, setPrompt] = useState<string>("");
-  // state to store the user input for the sequence length
-  const [seqLen, setSeqLen] = useState<number>(10);
 
   // state to store the error message
   const [error, setError] = useState("");
@@ -19,21 +16,19 @@ const Home = () => {
   // Joins the array of strings with proper spacing
 
   // Function validates input and fetch the data from the server and update the state
-  const handleSearch = async () => {
+  const handleSubmit = async () => {
     setError("");
     setResult(null);
     setLoading(true);
 
     if (prompt === "" || prompt === null) {
-      setError("Please enter a query");
+      setError("Please enter a valid prompt");
       setLoading(false);
       return;
     }
     try {
       const response = await fetch(
-        `http://localhost:5000/predict?prompt=${
-          prompt.trim() + " "
-        }&seqlen=${seqLen}`,
+        `http://localhost:5000/translate?prompt=${prompt.trim()}`,
         {
           method: "GET",
           headers: {
@@ -46,7 +41,7 @@ const Home = () => {
         if (res.error) {
           setError(res.error);
         } else {
-          setResult(res.result);
+          setResult(res.translation);
         }
       }
     } catch (error) {
@@ -104,31 +99,25 @@ const Home = () => {
             type="text"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Insert phrase to generate succeeding text..."
+            placeholder="Insert text to translate"
             className="home-search-input"
             required
           />
 
-          <button className="button" onClick={handleSearch}>
-            Search
+          <button className="button" onClick={handleSubmit}>
+            Translate
           </button>
         </div>
         <div className="home-result-container">
           <input
+            style={{ backgroundColor: "#fff", color: "#000", opacity: "1" }}
             type="text"
-            value="Translation is here"
+            value={result || ""}
             className="home-result-disp"
             disabled
           />
         </div>
         {error && <div className="home-search-error">* {error}</div>}
-        {result && (
-          <div className="home-results-container">
-            <div className="home-search-results">
-              <h2 style={{ textAlign: "left" }}>{result}</h2>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );
